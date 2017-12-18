@@ -1,0 +1,53 @@
+
+1、列出mysql数据库中的所有数据库
+sqoop list-databases --connect jdbc:mysql://192.168.1.107:3306/ --username root --password mysql
+#oracle
+sqoop list-databases --connect jdbc:oracle:thin:@//192.168.1.107:1521/ --username GOSALESDW --password GOSALESDW
+
+2、连接mysql并列出数据库中的表
+sqoop list-tables --connect jdbc:mysql://192.168.1.107:3306/mall --username root --password mysql
+#oracle
+sqoop list-tables --connect jdbc:oracle:thin:@//192.168.108.79:1521/cognos --username GOSALESDW --password GOSALESDW
+
+3、把mysql导入到hdfs中去
+sqoop import --connect jdbc:mysql://192.168.1.107:3306/mall --table word_tf --target-dir  '/mysql_tables/word_tf' --username root --password mysql --fields-terminated-by '|' --m 2 --split-by id;
+#oracle
+sqoop import --connect jdbc:oracle:thin:@//192.168.108.79:1521/cognos --username GOSALESDW --password GOSALESDW --table BURST_TABLE2 --target-dir  '/oracle/BURST_TABLE2' --fields-terminated-by '|' --split-by RECIPIENTS
+
+4、将关系型数据的表结构复制到hive中
+sqoop create-hive-table --connect jdbc:mysql://192.168.1.107:3306/mall --table word_tf --username root --password mysql --hive-table word_tf --fields-terminated-by '|'  --lines-terminated-by "\n" ;
+
+参数说明：
+--fields-terminated-by "\0001"  是设置每列之间的分隔符，"\0001"是ASCII码中的1，它也是hive的默认行内分隔符， 而sqoop的默认行内分隔符为"，
+--lines-terminated-by "\n"  设置的是每行之间的分隔符，此处为换行符，也是默认的分隔符；
+注意：只是复制表的结构，表中的内容没有复制
+
+
+5、将数据从关系数据库导入文件到hive表中
+sqoop import --connect jdbc:mysql://192.168.1.107:3306/mall --username root --password mysql --table word_tf --hive-import --hive-table word_tf -m 1 --fields-terminated-by '|' --split-by id ;
+
+参数说明：
+-m 2 表示由两个map作业执行；
+--fields-terminated-by "\0001"  需同创建hive表时保持一致；
+
+6、将hdfs数据导出到mysql数据库表中
+sqoop export --connect jdbc:mysql://192.168.1.107:3306/mall --username root --password mysql --table word_tf --export-dir /mysql_tables/word_tf/part-m-00000 --input-fields-terminated-by '|'
+##中文乱码问题的解决
+sqoop export --connect "jdbc:mysql://192.168.1.107:3306/mall?characterEncoding=UTF-8" --username root --password mysql --table word_tf --export-dir /mysql_tables/word_tf/part-m-00000 --input-fields-terminated-by '|'
+
+注意：
+ 1)在进行导入之前，mysql中的表userst必须已经提起创建好了。
+ 2)jdbc:mysql://192.168.20.118:3306/test中的IP地址改成10.1.127.224会报异常
+
+
+7、将数据从关系数据库导入文件到hive表中，--query 语句使用
+sqoop import --append --connect jdbc:mysql://192.168.1.107:3306/mall --username root --password mysql --query "select id,word from word_tf where id = 1 and \$CONDITIONS"  -m 1  --target-dir /mysql_tables/word_tf_1 --fields-terminated-by '|';
+
+
+8、将数据从关系数据库导入文件到hive表中，--columns  --where 语句使用
+sqoop import --append --connect jdbc:mysql://192.168.1.107:3306/mall --username root --password mysql --table word_tf --columns "id,word,tf"  --where "id=2 and tf=1"  -m 1  --target-dir /mysql_tables/word_tf_8 --fields-terminated-by '|';
+
+注意：--target-dir /user/hive/warehouse/userinfos2   可以用  --hive-import --hive-table userinfos2 进行替换
+
+
+

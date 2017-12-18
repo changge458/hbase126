@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!-- core-site.xml -->
+<configuration>
+	<property>
+		<name>fs.defaultFS</name>
+		<value>hdfs://mycluster</value>
+	</property>
+	<property>
+      		<name>hadoop.proxyuser.centos.groups</name>
+      		<value>*</value>
+      		<description>Allow the superuser oozie to impersonate any members of the group group1 and group2</description>
+ 	</property>
+ 
+ 	<property>
+      		<name>hadoop.proxyuser.centos.hosts</name>
+      		<value>*</value>
+      		<description>The superuser can connect only from host1 and host2 to impersonate a user</description>
+  	</property>
+</configuration>
